@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from backend.ImageProcessor import ImageProcessor
 from backend.S3Uploader import S3Uploader
 from backend.StabbleDifusionApi import StableDiffusionApi
-from backend.core import GameInsightExtractor
+# from backend.core import GameInsightExtractor
 from db.db import db
 from flask_cors import CORS
 from flask import send_from_directory
@@ -42,7 +42,7 @@ jwt = JWTManager(app)
 
 CORS(app)
 
-extractor = GameInsightExtractor()
+# extractor = GameInsightExtractor()
 
 stableDiffusionApi = StableDiffusionApi()
 imageProcessor = ImageProcessor()
