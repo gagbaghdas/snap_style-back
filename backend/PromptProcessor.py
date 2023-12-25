@@ -61,7 +61,7 @@ class PromptProcessor:
         response_string = self.run_llm(
             promt_template
         )
-        response_list = response_string.strip('][').split(', ')
+        response_list = response_string.strip('][').split('###')
         return response_list
 
     def run_llm(self, template: str, *args, **kwargs) -> any:
