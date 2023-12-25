@@ -5,4 +5,4 @@ __pycache__/
 .vscode/
 .DS_Store
 user_projects/
-IPAdaper/models/image_encoder/pytorch_model.bin
+IPAdapter/models/image_encoder/pytorch_model.bin
