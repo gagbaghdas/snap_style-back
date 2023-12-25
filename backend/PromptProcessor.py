@@ -53,8 +53,8 @@ class PromptProcessor:
             current weather temperature: {weather}°C.
             Prompts should be relevant to the user and the current trends.
             Prompts should be short, containing information about outfit type, color, style, etc.
-            You should generate 4 prompts.
-            Output format: [prompt1, prompt2, prompt3, prompt4]
+            You should generate 4 prompts separated by a '###' symbol.
+            Output format: [prompt1###prompt2###prompt3###prompt4]
             Example:[Cocktail outfit for the weekend, Christmas Outfit, Crazy Look mixing colors, Serious Suite for Business Lunch]
             """
         
