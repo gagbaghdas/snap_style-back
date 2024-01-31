@@ -30,6 +30,7 @@ import shutil
 # from backend.AmazonProductsSearchApi import AmazonProductsSearchApi
 from backend.PromptProcessor import PromptProcessor
 from backend.OutfitGenerator import OutfitGenerator
+from backend.FaceEmbeddingGenerator import FaceEmbeddingGenerator
 
 load_dotenv()
 app = Flask(__name__)
@@ -50,8 +51,36 @@ uploader = S3Uploader()
 promptProcessor = PromptProcessor()
 
 outfitGenerator = OutfitGenerator()
+faceEmbeddingGenerator = FaceEmbeddingGenerator()
 
 # amazon_search_api = AmazonProductsSearchApi('www.amazon.com')
+
+@app.route("/api/generate_avatar", methods=["POST"])
+# @jwt_required()
+def generate_outfit():
+    data = request.get_json()
+    if data:
+        prompt = data["prompt"]
+        image_path = "images/avatar.png"
+        negative_prompt = "ugly"
+        result = faceEmbeddingGenerator.generate_image( image_path, prompt, negative_prompt)
+
+        if result:
+            image_name = uuid.uuid4().hex[:8]
+            file_path = f'images/{image_name}.png'
+            result.save(file_path)
+            generated_image_url = uploader.upload_file(file_path, f'Images/avatars/{image_name}.png')
+            try:
+                os.remove(file_path)
+                print(f"File '{file_path}' has been deleted.")
+            except OSError as e:
+                print(f"Error: {e.strerror}")
+
+            return jsonify({"generated_image_url": generated_image_url}), 200
+        else:
+            return jsonify({"response": "Failed to generate image"}), 200
+    else:
+        return jsonify({"response": "Failed"}), 200
 
 @app.route("/api/upload_main_image", methods=["PUT"])
 # @jwt_required()

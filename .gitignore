@@ -6,3 +6,6 @@ __pycache__/
 .DS_Store
 user_projects/
 IPAdapter/models/image_encoder/pytorch_model.bin
+*.bin
+*.safetensors
+*.onnx
