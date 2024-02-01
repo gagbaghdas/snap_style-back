@@ -9,10 +9,10 @@ from InstantID.pipeline_stable_diffusion_xl_instantid import StableDiffusionXLIn
 
 class FaceEmbeddingGenerator:
     def __init__(self):
-        self.app = FaceAnalysis(name='antelopev2', root='../InstantID/', 
+        self.app = FaceAnalysis(name='antelopev2', root='./../InstantID/', 
                                 providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         self.app.prepare(ctx_id=0, det_size=(640, 640))
-        controlnet_path = '../InstantID/checkpoints/ControlNetModel'
+        controlnet_path = './../InstantID/checkpoints/ControlNetModel'
         self.controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
         base_model = 'wangqixun/YamerMIX_v8'  # Replace with your model
         self.pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
@@ -20,9 +20,9 @@ class FaceEmbeddingGenerator:
             controlnet=self.controlnet,
             torch_dtype=torch.float16
         )
-        # self.pipe.to("mps")
         self.pipe.cuda()
-        face_adapter = '../InstantID/checkpoints/ip-adapter.bin'
+        # self.pipe.to("mps")
+        face_adapter = './../InstantID/checkpoints/ip-adapter.bin'
         self.pipe.load_ip_adapter_instantid(face_adapter)
 
     def generate_image(self, image_path, prompt, negative_prompt):
