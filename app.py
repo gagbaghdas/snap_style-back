@@ -4,6 +4,7 @@ from flask_jwt_extended import decode_token
 import uuid
 
 from dotenv import load_dotenv
+load_dotenv()
 from backend.ImageProcessor import ImageProcessor
 from backend.S3Uploader import S3Uploader
 from backend.StabbleDifusionApi import StableDiffusionApi
@@ -32,7 +33,7 @@ from backend.PromptProcessor import PromptProcessor
 from backend.OutfitGenerator import OutfitGenerator
 from backend.FaceEmbeddingGenerator import FaceEmbeddingGenerator
 
-load_dotenv()
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
