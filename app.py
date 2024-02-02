@@ -27,6 +27,7 @@ from pymongo.errors import DuplicateKeyError
 from bson import ObjectId
 import base64
 import shutil
+from werkzeug.utils import secure_filename
 
 # from backend.AmazonProductsSearchApi import AmazonProductsSearchApi
 from backend.PromptProcessor import PromptProcessor
@@ -60,26 +61,79 @@ faceEmbeddingGenerator = FaceEmbeddingGenerator()
 # @jwt_required()
 def generate_avatar():
     data = request.get_json()
-    if data:
-        prompt = data["prompt"]
-        image_path = "images/avatar.png"
-        negative_prompt = "ugly"
-        result = faceEmbeddingGenerator.generate_image( image_path, prompt, negative_prompt)
+    user_id = request.headers.get('X-User-Id')
+    if user_id:
+        db_user_image = db.user_avatars.find_one({"user_id": user_id})
+        db_user = db.users.find_one({"_id": ObjectId(user_id)})
+        if db_user_image and db_user:
+            main_image_s3_file_key = db_user_image["main_avatar_image_s3_key"]
+            main_image_url = uploader.generate_presigned_url(main_image_s3_file_key, 600)
+            if main_image_url:
+                prompt = data["prompt"]
+                negative_prompt = "ugly"
+                result = faceEmbeddingGenerator.generate_image( user_id, main_image_url, prompt, negative_prompt)
+                image_name = result[0]
+                file_path = result[1]
+                s3_file_key = f'{user_id}/Images/avatars/{image_name}'
+                user_avatar = {"user_id": user_id, "generation_s3_file_key": s3_file_key}
+                db.user_avatars.insert_one(user_avatar)
+                generated_avatar_url = uploader.upload_file(file_path, s3_file_key)
+                try:
+                    os.remove(file_path)
+                    print(f"File '{file_path}' has been deleted.")
+                except OSError as e:
+                    print(f"Error: {e.strerror}")
 
-        if result:
-            image_name = uuid.uuid4().hex[:8]
-            file_path = f'images/{image_name}.png'
-            result.save(file_path)
-            generated_image_url = uploader.upload_file(file_path, f'Images/avatars/{image_name}.png')
+                response = {"generated_image_url": generated_avatar_url}
+                return jsonify(
+                                response
+                        ), 201
+            else:
+                return jsonify({"response": "Failed to generate presigned URL"}), 200
+        else:
+            return jsonify({"response": "No Uploaded Image"}), 200
+    else:
+        return jsonify({"response": "Failed"}), 200
+
+@app.route("/api/upload_main_avatar_image", methods=["PUT"])
+# @jwt_required()
+def upload_main_avatar_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image part'}), 400
+    image_data = request.files.get("image")
+
+    user_id = request.headers.get('X-User-Id')
+    if user_id:
+        filename = f'{user_id}_main_avatar_image.png'
+        input_dir = "avatars/input"
+        os.makedirs(input_dir, exist_ok=True)
+        filename = secure_filename(filename)
+        input_path = os.path.join(input_dir, filename)
+        image_data.save(input_path)
+
+        file_path = f'{input_dir}/{filename}'
+        s3_file_key = f'{user_id}/Images/avatars/{filename}'
+        user_image = {"user_id": user_id, "main_avatar_image_s3_key": s3_file_key}
+
+        uploaded_file_url = uploader.upload_file(file_path, s3_file_key)
+        if uploaded_file_url:
+            print(f"File uploaded successfully. URL: {uploaded_file_url}")
             try:
                 os.remove(file_path)
                 print(f"File '{file_path}' has been deleted.")
             except OSError as e:
                 print(f"Error: {e.strerror}")
+            
+            db_user_image = db.user_avatars.find_one({"user_id": user_id})
+            if db_user_image:
+                db.user_avatars.update_one({"_id": db_user_image["_id"]}, {"$set": user_image})
+            else:
+                db.user_avatars.insert_one(user_image)
 
-            return jsonify({"generated_image_url": generated_image_url}), 200
         else:
-            return jsonify({"response": "Failed to generate image"}), 200
+            print("Failed to upload file.")
+
+        return jsonify({"response": "done"}), 200
     else:
         return jsonify({"response": "Failed"}), 200
 

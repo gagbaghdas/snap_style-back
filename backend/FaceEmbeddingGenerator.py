@@ -6,6 +6,10 @@ from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
 from insightface.app import FaceAnalysis
 from InstantID.pipeline_stable_diffusion_xl_instantid import StableDiffusionXLInstantIDPipeline, draw_kps
+import uuid
+import os
+import traceback
+
 
 class FaceEmbeddingGenerator:
     def __init__(self):
@@ -25,7 +29,7 @@ class FaceEmbeddingGenerator:
         face_adapter = './InstantID/checkpoints/ip-adapter.bin'
         self.pipe.load_ip_adapter_instantid(face_adapter)
 
-    def generate_image(self, image_path, prompt, negative_prompt):
+    def generate_image(self, user_id, image_path, prompt, negative_prompt):
         try:
             face_image = load_image(image_path)
             face_info = self.app.get(cv2.cvtColor(np.array(face_image), cv2.COLOR_RGB2BGR))
@@ -40,9 +44,13 @@ class FaceEmbeddingGenerator:
                 controlnet_conditioning_scale=0.8,
                 ip_adapter_scale=0.8,
             ).images[0]
+            image_name = uuid.uuid4().hex[:8]
+            final_file_path = f'images/avatars/{user_id}_{image_name}.png'
+            image.save(final_file_path)
 
-            return image
+            return image_name, final_file_path
         except Exception as e:
+            traceback.print_exc()  # This prints the full traceback
             print(f"Error during image generation: {e}")
             return None
 
