@@ -58,7 +58,7 @@ faceEmbeddingGenerator = FaceEmbeddingGenerator()
 
 @app.route("/api/generate_avatar", methods=["POST"])
 # @jwt_required()
-def generate_outfit():
+def generate_avatar():
     data = request.get_json()
     if data:
         prompt = data["prompt"]
