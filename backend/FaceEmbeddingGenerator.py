@@ -39,6 +39,7 @@ class FaceEmbeddingGenerator:
 
             image = self.pipe(
                 prompt,
+                negative_prompt=negative_prompt,
                 image_embeds=face_emb,
                 image=face_kps,
                 controlnet_conditioning_scale=0.8,

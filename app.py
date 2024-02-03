@@ -70,7 +70,7 @@ def generate_avatar():
             main_image_url = uploader.generate_presigned_url(main_image_s3_file_key, 600)
             if main_image_url:
                 prompt = data["prompt"]
-                negative_prompt = "ugly"
+                negative_prompt = "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green"
                 result = faceEmbeddingGenerator.generate_image( user_id, main_image_url, prompt, negative_prompt)
                 image_name = result[0]
                 file_path = result[1]
