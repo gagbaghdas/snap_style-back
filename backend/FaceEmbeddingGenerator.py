@@ -47,7 +47,8 @@ class FaceEmbeddingGenerator:
                 image=face_kps,
                 controlnet_conditioning_scale=0.8,
                 ip_adapter_scale=0.8,
-                generator=generator
+                generator=generator,
+                num_inference_steps=30
             ).images[0]
             image_name = uuid.uuid4().hex[:8]
             final_file_path = f'images/avatars/{user_id}_{image_name}.png'
