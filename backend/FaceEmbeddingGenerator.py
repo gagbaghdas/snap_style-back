@@ -19,15 +19,17 @@ class FaceEmbeddingGenerator:
         controlnet_path = './InstantID/checkpoints/ControlNetModel'
         self.controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
         base_model = 'wangqixun/YamerMIX_v8'  # Replace with your model
+        self.device = "cuda" if torch.cuda.is_available() else "mps"
         self.pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
             base_model,
             controlnet=self.controlnet,
             torch_dtype=torch.float16
         )
-        self.pipe.cuda()
-        # self.pipe.to("mps")
+        # self.pipe.cuda()
+        self.pipe.to(self.device)
         face_adapter = './InstantID/checkpoints/ip-adapter.bin'
         self.pipe.load_ip_adapter_instantid(face_adapter)
+        
 
     def generate_image(self, user_id, image_path, prompt, negative_prompt):
         try:
@@ -36,6 +38,7 @@ class FaceEmbeddingGenerator:
             face_info = sorted(face_info, key=lambda x: (x['bbox'][2]-x['bbox'][0])*x['bbox'][3]-x['bbox'][1])[-1]
             face_emb = face_info['embedding']
             face_kps = draw_kps(face_image, face_info['kps'])
+            generator = torch.Generator(device=self.device).manual_seed(0)
 
             image = self.pipe(
                 prompt,
@@ -44,6 +47,7 @@ class FaceEmbeddingGenerator:
                 image=face_kps,
                 controlnet_conditioning_scale=0.8,
                 ip_adapter_scale=0.8,
+                generator=generator
             ).images[0]
             image_name = uuid.uuid4().hex[:8]
             final_file_path = f'images/avatars/{user_id}_{image_name}.png'
