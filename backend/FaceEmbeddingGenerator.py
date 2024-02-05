@@ -9,6 +9,8 @@ from InstantID.pipeline_stable_diffusion_xl_instantid import StableDiffusionXLIn
 import uuid
 import os
 import traceback
+import diffusers
+from huggingface_hub import hf_hub_download
 
 
 class FaceEmbeddingGenerator:
@@ -18,7 +20,7 @@ class FaceEmbeddingGenerator:
         self.app.prepare(ctx_id=0, det_size=(640, 640))
         controlnet_path = './InstantID/checkpoints/ControlNetModel'
         self.controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
-        base_model = 'wangqixun/YamerMIX_v8'  # Replace with your model
+        base_model = 'wangqixun/YamerMIX_v8'
         self.device = "cuda" if torch.cuda.is_available() else "mps"
         self.pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
             base_model,
@@ -39,6 +41,12 @@ class FaceEmbeddingGenerator:
             face_emb = face_info['embedding']
             face_kps = draw_kps(face_image, face_info['kps'])
             generator = torch.Generator(device=self.device).manual_seed(0)
+            scheduler_kwargs = hf_hub_download(
+                repo_id="wangqixun/YamerMIX_v8",
+                subfolder="scheduler",
+                filename="scheduler_config.json",
+            )
+            scheduler = diffusers.EulerDiscreteScheduler.from_config(scheduler_kwargs)
 
             image = self.pipe(
                 prompt,
@@ -48,7 +56,9 @@ class FaceEmbeddingGenerator:
                 controlnet_conditioning_scale=0.8,
                 ip_adapter_scale=0.8,
                 generator=generator,
-                num_inference_steps=30
+                num_inference_steps=30,
+                guidance_scale=5,
+                scheduler=scheduler
             ).images[0]
             image_name = uuid.uuid4().hex[:8]
             final_file_path = f'images/avatars/{user_id}_{image_name}.png'
